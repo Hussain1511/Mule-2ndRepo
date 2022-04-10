@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="63713084-e7d7-4bf9-b975-7ad36f56e862" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="332ba54b-040a-4230-ada0-d2040cee5831" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="Hussain@1" database="sql_inventory" />
+	</db:config>
+	<flow name="10aprdbFlow" doc:id="f06a9adb-a1d1-494a-b792-44e35b1ebbd7" >
+		<http:listener doc:name="Listener" doc:id="58de4bc0-21fb-45e7-8895-2950169d595d" config-ref="HTTP_Listener_config" path="/SQLdb" allowedMethods="POST">
+			<http:response >
+				<http:body ><![CDATA[Data updated in Database]]></http:body>
+			</http:response>
+		</http:listener>
+		<logger level="INFO" doc:name="Logger" doc:id="8b2b64ee-60fe-4149-bba0-fd0a4d77a087" message="#[payload]"/>
+		<set-variable value="#[payload]" doc:name="Variable" doc:id="ed867f9e-df32-4dd4-a099-8ed698c8721c" variableName="inputPayload"/>
+		<db:insert doc:name="Insert" doc:id="f0e05e69-413e-4684-9819-985e646c0964" config-ref="Database_Config" queryTimeoutUnit="MINUTES" target="sqlDB">
+			<db:sql><![CDATA[INSERT INTO sql_inventory.products (name,quantity_in_stock,unit_price) values(:name,:quantity_in_stock,:unit_price);]]></db:sql>
+			<db:input-parameters><![CDATA[#[{name:payload.product_name,
+	quantity_in_stock:payload.quantity,
+	unit_price:payload.price
+}]]]></db:input-parameters>
+			<db:auto-generated-keys-column-indexes />
+		</db:insert>
+		<logger level="INFO" doc:name="Logger" doc:id="c3a2353e-5855-4b1a-a14c-55cf053bd9aa" message='#[vars.sqlDB]'/>
+	</flow>
+</mule>
